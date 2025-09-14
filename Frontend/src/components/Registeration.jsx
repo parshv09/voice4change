@@ -31,7 +31,7 @@ const registrationSchema = z
   })
   .refine(
     (data) => {
-      if (data.role === "Authority") {
+      if (data.role === "ADMIN") {
         return data.governmentId && data.departmentName && data.workLocation;
       }
       return true;
@@ -64,9 +64,17 @@ const onSubmit = async (d) => {
   formData.append('email', d.email);
   formData.append('phone', d.phone);
   formData.append('address', d.address);
-  formData.append('role', d.role); // Only 'CIVILIAN' or 'ADMIN'
+   const roleMapping = {
+    'CIVILIAN': 'CIVILIAN',
+    'ADMIN': 'ADMIN'
+  };
+  formData.append('role', roleMapping[d.role]);// Only 'CIVILIAN' or 'ADMIN'
   formData.append('id_proof_type', d.idProofType);
-  formData.append('id_proof_file', d.idProofFile); // File field
+  if (d.idProofFile && d.idProofFile.length > 0) {
+  formData.append('id_proof_file', d.idProofFile[0]); // ✅ send the actual File
+}
+// File field
+
 
   if (d.governmentId)
     formData.append('government_id', d.governmentId);
@@ -78,7 +86,9 @@ const onSubmit = async (d) => {
     formData.append('occupation', d.occupation);
 
   formData.append('password', d.password);
-
+for (let [key, value] of formData.entries()) {
+  console.log(key, value);
+}
   try {
     const response = await axios.post(
       "http://127.0.0.1:8000/api/auth/register/",
@@ -91,6 +101,7 @@ const onSubmit = async (d) => {
     );
     // success logic
   } catch (err) {
+     console.error("Registration error:", err.response?.data);
     setError(
       err.response?.data?.message ||
       err.response?.data?.detail ||
@@ -177,9 +188,9 @@ const onSubmit = async (d) => {
               className="input px-2 py-2 rounded-xl bg-gray-800 focus-within:outline-0 w-full"
               onChange={(e) => setRole(e.target.value)}
             >
-              <option value="">Select Role</option>
-              <option value="CIVILIAN">Civilian</option>
-              <option value="ADMIN">Village Authority Admin</option>
+ <option value="">Select Role</option>
+  <option value="CIVILIAN">Civilian</option>
+  <option value="AUTHORITY">Village Authority Admin</option>
             </select>
             {errors.role && (
               <p className="text-red-500">{errors.role.message}</p>
@@ -191,13 +202,13 @@ const onSubmit = async (d) => {
               {...register("idProofType")}
               className="input px-2 py-2 rounded-xl bg-gray-800 focus-within:outline-0 w-full"
             >
-              <option value="">Select ID Proof Type</option>
-              <option value="PAN Card">PAN Card</option>
-              <option value="Voter ID">Voter ID</option>
-              <option value="Passport">Passport</option>
-              <option value="Ration Card">Ration Card</option>
-              <option value="Driving License">Driving License</option>
-              <option value="Other">Other</option>
+             <option value="">Select ID Proof Type</option>
+              <option value="PAN">PAN Card</option>
+              <option value="VOTER">Voter ID</option>
+              <option value="PASSPORT">Passport</option>
+              <option value="RATION">Ration Card</option>
+              <option value="DL">Driving License</option>
+              <option value="OTHER">Other</option>
             </select>
             {errors.idProofType && (
               <p className="text-red-500">{errors.idProofType.message}</p>

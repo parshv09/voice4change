@@ -41,7 +41,7 @@ const Login = () => {
       localStorage.setItem("userData", JSON.stringify(response?.data));
       reset();
 
-      if (response.data.user.user_type === "ADMIN") {
+      if (response.data.user.user_type === "Authority" || response.data.user.user_type === "ADMIN") {
         navigate("/admin");
       } else {
         navigate("/civilian");
