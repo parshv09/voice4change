@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import FeedbackCard from "../components/FeedbackCard";
 import axios from "axios";
 import FeedbackModal from "../components/FeedbackModel";
@@ -17,15 +17,12 @@ const MyFeedbacks = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(
-          "http://127.0.0.1:8000/api/feedback/user/",
-          {
-            headers: {
-              Authorization: `Bearer ${user?.access_token}`,
-            },
-          }
-        );
-        setData(res.data);
+        const res = await axios.get("http://127.0.0.1:8000/api/feedback/user/", {
+          headers: {
+            Authorization: `Bearer ${user?.access_token}`,
+          },
+        });
+        setData(res.data.results || res.data); // ✅ Fix
       } catch (error) {
         setError(error);
       } finally {
@@ -50,7 +47,7 @@ const MyFeedbacks = () => {
             },
           }
         );
-        setData(res.data);
+        setData(res.data.results || res.data); // ✅ Fix
       } catch (error) {
         setError(error);
       } finally {
@@ -66,12 +63,11 @@ const MyFeedbacks = () => {
   };
 
   const handleUpdateFeedback = (updatedFeedback) => {
-    setFeedbacks((prev) =>
+    setData((prev) =>
       prev.map((f) => (f.id === updatedFeedback.id ? updatedFeedback : f))
     );
   };
 
-  console.log(data);
   return (
     <div className="p-10 max-w-4xl mx-auto bg-gray-800">
       <div className="flex justify-between items-center">
@@ -80,7 +76,7 @@ const MyFeedbacks = () => {
           className="bg-gray-700 px-4 py-2"
           onChange={(e) => setLang(e.target.value)}
         >
-          <option value="">None</option>
+          <option value="en">English</option>
           <option value="mr">Marathi</option>
           <option value="hi">Hindi</option>
         </select>
@@ -89,17 +85,15 @@ const MyFeedbacks = () => {
       {loading && <div className="mt-4">Loading...</div>}
       <div className="mt-6 space-y-6">
         {data.length > 0 ? (
-          data.map((feedback, index) => (
-            <>
-              <FeedbackCard
-                key={feedback.id}
-                feedback={feedback}
-                section="myfeedbacks"
-              />
-            </>
+          data.map((feedback) => (
+            <FeedbackCard
+              key={feedback.id}
+              feedback={feedback}
+              section="myfeedbacks"
+            />
           ))
         ) : (
-          <p className="text-gray-400">No feedbacks submitted yet.</p>
+          !loading && <p className="text-gray-400">No feedbacks submitted yet.</p>
         )}
       </div>
     </div>

@@ -55,33 +55,52 @@ const Registration = () => {
     resolver: zodResolver(registrationSchema),
   });
 
-  const onSubmit = async (d) => {
-    console.log("Registration Data:", d);
-    setLoading(true);
-    setError(null);
+const onSubmit = async (d) => {
+  setLoading(true);
+  setError(null);
+  const formData = new FormData();
+  formData.append('first_name', d.first_name);
+  formData.append('last_name', d.last_name);
+  formData.append('email', d.email);
+  formData.append('phone', d.phone);
+  formData.append('address', d.address);
+  formData.append('role', d.role); // Only 'CIVILIAN' or 'ADMIN'
+  formData.append('id_proof_type', d.idProofType);
+  formData.append('id_proof_file', d.idProofFile); // File field
 
-    try {
-      const response = await axios.post(
-        "http://127.0.0.1:8000/api/auth/register/",
-        d
-      );
-      console.log("Register successful:", response.data);
-      toast.success("Registered Successfully");
-      setTimeout(() => {
-        navigate("/login");
-      }, 1500);
-      reset();
-    } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          err.response?.data?.detail ||
-          "An error occurred"
-      );
-      console.error("Registeration failed:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (d.governmentId)
+    formData.append('government_id', d.governmentId);
+  if (d.departmentName)
+    formData.append('department_name', d.departmentName);
+  if (d.workLocation)
+    formData.append('work_location', d.workLocation);
+  if (d.occupation)
+    formData.append('occupation', d.occupation);
+
+  formData.append('password', d.password);
+
+  try {
+    const response = await axios.post(
+      "http://127.0.0.1:8000/api/auth/register/",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    // success logic
+  } catch (err) {
+    setError(
+      err.response?.data?.message ||
+      err.response?.data?.detail ||
+      "An error occurred"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-900 via-purple-800 to-indigo-900 text-white p-6">

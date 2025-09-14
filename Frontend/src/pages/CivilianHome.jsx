@@ -34,24 +34,27 @@ const CivilianHome = () => {
     const user = JSON.parse(localStorage.getItem("userData"));
     if (user) setUser(user);
 
-    const fetchFeedbacks = async () => {
-      try {
-        setLoading(true);
-        const res = await axios.get(
-          `http://127.0.0.1:8000/api/feedback/list?feedback_type=${feedbackType}&category=${category}&status=${status}&urgency=${urgency}&search=${searchQuery.trim().toLowerCase()}`,
-          {
-            headers: {
-              Authorization: `Bearer ${user?.access_token}`,
-            },
-          }
-        );
-        setFeedbacks(res.data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
+   const fetchFeedbacks = async () => {
+  try {
+    setLoading(true);
+    const res = await axios.get(
+      `http://127.0.0.1:8000/api/feedback/list?feedback_type=${feedbackType}&category=${category}&status=${status}&urgency=${urgency}&search=${searchQuery.trim().toLowerCase()}`,
+      {
+        headers: {
+          Authorization: `Bearer ${user?.access_token}`,
+        },
       }
-    };
+    );
+
+    // 👇 FIX: Use results array if present
+    setFeedbacks(res.data.results || res.data);
+  } catch (error) {
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
+
     fetchFeedbacks();
   }, [feedbackType,urgency,status,category,searchQuery]);
 
