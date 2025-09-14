@@ -83,5 +83,14 @@ class Feedback(models.Model):
         ])
         super().save(*args, **kwargs)
         
+    class Meta:
+        indexes = [
+            models.Index(fields=["category"]),
+            models.Index(fields=["status"]),
+            models.Index(fields=["urgency"]),
+            models.Index(fields=["created_at"]),
+            models.Index(fields=["location"]),
+        ]
+
     def __str__(self):
         return f"{self.title} - {self.get_feedback_type_display()}"

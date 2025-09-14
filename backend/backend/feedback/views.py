@@ -84,26 +84,48 @@ class FeedbackCreateView(generics.CreateAPIView):
             print(f"Sentiment analysis error: {e}")
             return 0.0  # Default score if API call fails
         
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from rest_framework.pagination import PageNumberPagination
+
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
+@method_decorator(cache_page(60 * 2), name="dispatch")  # cache for 2 minutes
 class FeedbackListView(generics.ListAPIView):
-    queryset = Feedback.objects.all()
+    queryset = Feedback.objects.all().select_related("user")
     serializer_class = FeedbackSerializer
     permission_classes = [permissions.AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = FeedbackFilter
-    search_fields = ['title', 'description', 'category', 'location']
-    ordering_fields = ['created_at', 'upvotes', 'urgency']
-    
-    
+    search_fields = ["keywords"]  # leverage precomputed keywords instead
+    ordering_fields = ["created_at", "upvotes", "urgency"]
+    pagination_class = StandardResultsSetPagination
+
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
-        language = request.GET.get('lang', 'en')
-        translator = Translator()
+        language = request.GET.get("lang", "en")
 
-        for feedback in response.data:
-            feedback['title'] = translator.translate(feedback['title'], dest=language).text
-            feedback['description'] = translator.translate(feedback['description'], dest=language).text
-        
+        if language != "en":  # Only translate if another language is requested
+            translator = Translator()
+            # Check if data is paginated (dict with "results")
+            feedback_list = response.data.get("results", response.data)
+
+            for feedback in feedback_list:
+                feedback["title"] = translator.translate(
+                    feedback["title"], dest=language
+                ).text
+                feedback["description"] = translator.translate(
+                    feedback["description"], dest=language
+                ).text
+        else:
+            return response
         return response
+
+
 
 class FeedbackDetailView(generics.RetrieveAPIView):
     queryset = Feedback.objects.all()
@@ -182,4 +204,5 @@ class UserFeedbackView(generics.ListAPIView):
         #     return Feedback.objects.filter(location=user.address)
         
         # If not admin, return only the feedback created by the logged-in user
-        return Feedback.objects.filter(user=user)
+        return Feedback.objects.filter(user=user).select_related("user").order_by("-created_at") 
+    

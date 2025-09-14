@@ -47,7 +47,6 @@ CLOUDINARY_STORAGE = {
     }
 }
 
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 print(CLOUDINARY_STORAGE['CLOUD_NAME'])
 print(CLOUDINARY_STORAGE['API_KEY'])
@@ -61,6 +60,7 @@ cloudinary.config(
     secure=True
 )
 
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 AUTH_USER_MODEL = "authentication.UserAccount"
 ALLOWED_HOSTS = ['*']
@@ -193,7 +193,7 @@ REST_FRAMEWORK = {
     },
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
-    ),
+    )
     
 }
 

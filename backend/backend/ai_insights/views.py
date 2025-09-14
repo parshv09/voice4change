@@ -20,7 +20,7 @@ class AIInsightsView(APIView):
 
     def get(self, request):
         today = now()
-        last_30_days = today - timedelta(days=30)
+        last_30_days = today - timedelta(days=500)
 
         # Emerging Issues: Categories with highest increase in complaints
         category_trend = (
@@ -67,7 +67,7 @@ class AIInsightsView(APIView):
         )
         
         try:
-            model = genai.GenerativeModel("models/gemini-1.5-flash")
+            model = genai.GenerativeModel("models/gemini-2.0-flash")
             response = model.generate_content(prompt)
             return response.text.strip()
         except Exception as e:
