@@ -141,7 +141,7 @@ const CivilianHome = () => {
             value={category}
           >
             {[
-              "",
+              "ALL",
               "INFRASTRUCTURE",
               "TRANSPORTATION",
               "EDUCATION",
