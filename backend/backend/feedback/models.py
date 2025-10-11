@@ -43,6 +43,9 @@ class Feedback(models.Model):
     description = models.TextField()
     feedback_type = models.CharField(max_length=20, choices=FeedbackType.choices)
     category = models.CharField(max_length=20, choices=Category.choices)  # Updated to use choices
+    photo = CloudinaryField('feedback_image', blank=True, null=True)
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
     location = models.CharField(max_length=200, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.SUBMITTED)
     created_at = models.DateTimeField(default=timezone.now)

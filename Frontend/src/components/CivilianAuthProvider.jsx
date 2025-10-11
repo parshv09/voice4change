@@ -13,7 +13,7 @@ function CivilianAuthProvider({ children }) {
     }
   }, []);
 
-  if (!user || user?.user.user_type !== "CIVILIAN") {
+  if (!user || user?.user.user_type !== "Civilian") {
     return <Login />;
   }
 

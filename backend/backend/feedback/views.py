@@ -15,11 +15,27 @@ from rest_framework.exceptions import PermissionDenied
 from datetime import timedelta  # For time-based filtering
 from difflib import SequenceMatcher  # For checking text similarity
 from django.utils.timezone import now  # To get the current timestamp
-
-
+import cloudinary.uploader
+import requests
 
 # Configure Gemini API
 genai.configure(api_key=settings.GEMINI_API_KEY)
+
+def get_location_name(latitude, longitude):
+    url = "https://nominatim.openstreetmap.org/reverse"
+    params = {
+        'format': 'json',
+        'lat': latitude,
+        'lon': longitude,
+        'zoom': 6,  # Reduced zoom for less detailed result (state/region level)
+        'addressdetails': 1
+    }
+    headers = {'User-Agent': 'YourAppName/1.0'}
+    response = requests.get(url, params=params, headers=headers)
+    if response.status_code == 200:
+        data = response.json()
+        return data.get('display_name')  # Less detailed location name
+    return None
 
 class FeedbackCreateView(generics.CreateAPIView):
     queryset = Feedback.objects.all()
@@ -27,38 +43,63 @@ class FeedbackCreateView(generics.CreateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+    
     def perform_create(self, serializer):
         user = self.request.user
         feedback = serializer.validated_data
         description = feedback.get("description", "")
 
-        # Get sentiment score
+        # Get sentiment score (assuming your existing method)
         sentiment_score = self.get_sentiment_score(description)
-        
-         # Check if the user is sending too many feedbacks
+
+        # Check rate limit: max 5 feedbacks/hour
         recent_feedbacks = Feedback.objects.filter(
             user=user,
-            created_at__gte=now() - timedelta(hours=1)  # Last 1 hour
+            created_at__gte=now() - timedelta(hours=1)
         )
-
-        if recent_feedbacks.count() >= 5:  # More than 5 complaints in 1 hour
+        if recent_feedbacks.count() >= 5:
             raise PermissionDenied("Too many feedback submissions. Try again later.")
 
-        # Check if the feedback is very similar to previous submissions
+        # Check similarity to prevent duplicates
         for fb in recent_feedbacks:
             similarity = SequenceMatcher(None, fb.description.lower(), description.lower()).ratio()
-            if similarity > 0.8:  # More than 80% similarity
+            if similarity > 0.8:
                 raise PermissionDenied("Duplicate or similar feedback detected!")
-        
-        
-        print(f"User: {self.request.user}")  # Debugging
-        print(f"Is Authenticated: {self.request.user.is_authenticated}")  # Debugging
 
-        if not self.request.user or self.request.user.is_anonymous:
+        # Ensure user is authenticated
+        if not user or user.is_anonymous:
             raise PermissionDenied("Authentication required to submit feedback.")
-        # Save feedback with sentiment score
-        serializer.save(user=self.request.user, sentiment_score=sentiment_score)
 
+        # Get location and photo from request data
+        location = self.request.data.get("location")
+        photo = self.request.FILES.get("photo")
+
+        if not location:
+            raise PermissionDenied("Location data is required.")
+
+        # Upload photo to Cloudinary if photo is provided
+        photo_url = None
+        if photo:
+            upload_result = cloudinary.uploader.upload(photo)
+            photo_url = upload_result.get("secure_url")
+
+            latitude = self.request.data.get('latitude')
+            longitude = self.request.data.get('longitude')
+
+            if not latitude or not longitude:
+                raise PermissionDenied("Both latitude and longitude are required.")
+
+            location_name = get_location_name(latitude, longitude)
+
+            # Save all three
+            serializer.save(user=user, sentiment_score=sentiment_score,
+                            latitude=latitude, longitude=longitude,
+                            location=location_name, photo=photo_url)
+
+    
+   
+
+    
 
     def get_sentiment_score(self, text):
         """Analyze sentiment score using the free Gemini model"""

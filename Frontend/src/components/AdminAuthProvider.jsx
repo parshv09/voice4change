@@ -13,7 +13,7 @@ function AdminAuthProvider({ children }) {
     }
   }, []);
 
-  if (!user || user?.user.user_type !== "ADMIN") {
+  if (!user || user?.user.user_type !== "Authority") {
     return <Login />;
   }
 

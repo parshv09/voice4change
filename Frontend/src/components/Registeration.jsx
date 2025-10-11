@@ -14,15 +14,15 @@ const registrationSchema = z
     email: z.string().email("Invalid email address"),
     phone: z.string().regex(/^\d{10}$/, "Phone must be 10 digits"),
     address: z.string().min(5, "Address is required"),
-    role: z.enum(["CIVILIAN", "ADMIN"], "Select a valid role"),
-    idProofType: z.string().min(3, "ID Proof Type is required"),
-    idProofFile: z.any().refine((file) => file.length > 0, "File is required"),
+    role: z.enum(["Civilian", "Authority"], "Select a valid role"),
+    id_proof_type: z.string().min(3, "ID Proof Type is required"),
+    id_proof_file: z.any().refine((file) => file.length > 0, "File is required"),
 
-    // Conditional fields for Authority
-    authorityPosition: z.string().optional(),
-    governmentId: z.string().optional(),
-    departmentName: z.string().optional(),
-    workLocation: z.string().optional(),
+    // Conditional fields for Authority/Admin
+    authority_position: z.string().optional(),
+    government_id: z.string().optional(),
+    department_name: z.string().optional(),
+    work_location: z.string().optional(),
 
     occupation: z.string().optional(),
     password: z.string().min(6, {
@@ -31,12 +31,12 @@ const registrationSchema = z
   })
   .refine(
     (data) => {
-      if (data.role === "ADMIN") {
-        return data.governmentId && data.departmentName && data.workLocation;
+      if (data.role === "Authority") {
+        return data.government_id && data.department_name && data.work_location;
       }
       return true;
     },
-    { message: "Authority fields are required", path: ["governmentId"] }
+    { message: "Authority fields are required", path: ["government_id"] }
   );
 
 const Registration = () => {
@@ -55,63 +55,47 @@ const Registration = () => {
     resolver: zodResolver(registrationSchema),
   });
 
-const onSubmit = async (d) => {
-  setLoading(true);
-  setError(null);
-  const formData = new FormData();
-  formData.append('first_name', d.first_name);
-  formData.append('last_name', d.last_name);
-  formData.append('email', d.email);
-  formData.append('phone', d.phone);
-  formData.append('address', d.address);
-   const roleMapping = {
-    'CIVILIAN': 'CIVILIAN',
-    'ADMIN': 'ADMIN'
-  };
-  formData.append('role', roleMapping[d.role]);// Only 'CIVILIAN' or 'ADMIN'
-  formData.append('id_proof_type', d.idProofType);
-  if (d.idProofFile && d.idProofFile.length > 0) {
-  formData.append('id_proof_file', d.idProofFile[0]); // ✅ send the actual File
-}
-// File field
+  const onSubmit = async (d) => {
+    setLoading(true);
+    setError(null);
+    const formData = new FormData();
+    formData.append("first_name", d.first_name);
+    formData.append("last_name", d.last_name);
+    formData.append("email", d.email);
+    formData.append("phone", d.phone);
+    formData.append("address", d.address);
+    formData.append("role", d.role);
+    formData.append("id_proof_type", d.id_proof_type);
+    if (d.id_proof_file && d.id_proof_file.length > 0) {
+      formData.append("id_proof_file", d.id_proof_file[0]);
+    }
 
+    if (d.government_id) formData.append("government_id", d.government_id);
+    if (d.department_name) formData.append("department_name", d.department_name);
+    if (d.work_location) formData.append("work_location", d.work_location);
+    if (d.occupation) formData.append("occupation", d.occupation);
 
-  if (d.governmentId)
-    formData.append('government_id', d.governmentId);
-  if (d.departmentName)
-    formData.append('department_name', d.departmentName);
-  if (d.workLocation)
-    formData.append('work_location', d.workLocation);
-  if (d.occupation)
-    formData.append('occupation', d.occupation);
+    formData.append("password", d.password);
 
-  formData.append('password', d.password);
-for (let [key, value] of formData.entries()) {
-  console.log(key, value);
-}
-  try {
-    const response = await axios.post(
-      "http://127.0.0.1:8000/api/auth/register/",
-      formData,
-      {
+    try {
+      await axios.post("http://127.0.0.1:8000/api/auth/register/", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
-    );
-    // success logic
-  } catch (err) {
-     console.error("Registration error:", err.response?.data);
-    setError(
-      err.response?.data?.message ||
-      err.response?.data?.detail ||
-      "An error occurred"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
-
+      });
+      toast.success("Registration Successful");
+      navigate("/login");
+    } catch (err) {
+      setError(
+        err.response?.data?.message ||
+          err.response?.data?.detail ||
+          "An error occurred"
+      );
+      toast.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-900 via-purple-800 to-indigo-900 text-white p-6">
@@ -188,9 +172,9 @@ for (let [key, value] of formData.entries()) {
               className="input px-2 py-2 rounded-xl bg-gray-800 focus-within:outline-0 w-full"
               onChange={(e) => setRole(e.target.value)}
             >
- <option value="">Select Role</option>
-  <option value="CIVILIAN">Civilian</option>
-  <option value="AUTHORITY">Village Authority Admin</option>
+              <option value="">Select Role</option>
+              <option value="Civilian">Civilian</option>
+              <option value="Authority">Village Authority Admin</option>
             </select>
             {errors.role && (
               <p className="text-red-500">{errors.role.message}</p>
@@ -199,38 +183,38 @@ for (let [key, value] of formData.entries()) {
 
           <div>
             <select
-              {...register("idProofType")}
+              {...register("id_proof_type")}
               className="input px-2 py-2 rounded-xl bg-gray-800 focus-within:outline-0 w-full"
             >
-             <option value="">Select ID Proof Type</option>
+              <option value="">Select ID Proof Type</option>
               <option value="PAN">PAN Card</option>
-              <option value="VOTER">Voter ID</option>
+              <option value="VOTER_ID">Voter ID</option>
               <option value="PASSPORT">Passport</option>
-              <option value="RATION">Ration Card</option>
-              <option value="DL">Driving License</option>
+              <option value="RATION_CARD">Ration Card</option>
+              <option value="DRIVING_LICENSE">Driving License</option>
               <option value="OTHER">Other</option>
             </select>
-            {errors.idProofType && (
-              <p className="text-red-500">{errors.idProofType.message}</p>
+            {errors.id_proof_type && (
+              <p className="text-red-500">{errors.id_proof_type.message}</p>
             )}
           </div>
 
           <div>
             <input
-              {...register("idProofFile")}
+              {...register("id_proof_file")}
               type="file"
               className="input file-type px-4 py-2 rounded-xl bg-gray-800 focus-within:outline-0 w-full"
             />
-            {errors.idProofFile && (
-              <p className="text-red-500">{errors.idProofFile.message}</p>
+            {errors.id_proof_file && (
+              <p className="text-red-500">{errors.id_proof_file.message}</p>
             )}
           </div>
 
-          {role === "ADMIN" && (
+          {role === "Authority" && (
             <>
               <div>
                 <input
-                  {...register("authorityPosition")}
+                  {...register("authority_position")}
                   type="text"
                   placeholder="Authority Position"
                   className="input px-4 py-2 rounded-xl bg-gray-800 focus-within:outline-0 w-full"
@@ -239,45 +223,43 @@ for (let [key, value] of formData.entries()) {
 
               <div>
                 <input
-                  {...register("governmentId")}
+                  {...register("government_id")}
                   type="text"
                   placeholder="Government ID"
                   className="input px-4 py-2 rounded-xl bg-gray-800 focus-within:outline-0 w-full"
                 />
-                {errors.governmentId && (
-                  <p className="text-red-500">{errors.governmentId.message}</p>
+                {errors.government_id && (
+                  <p className="text-red-500">{errors.government_id.message}</p>
                 )}
               </div>
 
               <div>
                 <input
-                  {...register("departmentName")}
+                  {...register("department_name")}
                   type="text"
                   placeholder="Department Name"
                   className="input px-4 py-2 rounded-xl bg-gray-800 focus-within:outline-0 w-full"
                 />
-                {errors.departmentName && (
-                  <p className="text-red-500">
-                    {errors.departmentName.message}
-                  </p>
+                {errors.department_name && (
+                  <p className="text-red-500">{errors.department_name.message}</p>
                 )}
               </div>
 
               <div>
                 <input
-                  {...register("workLocation")}
+                  {...register("work_location")}
                   type="text"
                   placeholder="Work Location"
                   className="input px-4 py-2 rounded-xl bg-gray-800 focus-within:outline-0 w-full"
                 />
-                {errors.workLocation && (
-                  <p className="text-red-500">{errors.workLocation.message}</p>
+                {errors.work_location && (
+                  <p className="text-red-500">{errors.work_location.message}</p>
                 )}
               </div>
             </>
           )}
 
-          {role === "CIVILIAN" && (
+          {role === "Civilian" && (
             <div>
               <input
                 {...register("occupation")}

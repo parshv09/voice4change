@@ -41,11 +41,13 @@ const Login = () => {
       localStorage.setItem("userData", JSON.stringify(response?.data));
       reset();
 
-      if (response.data.user.user_type === "ADMIN") {
+      console.log("User role:", response.data.user.user_type);
+      if (response.data.user.user_type === "Authority") {
         navigate("/admin");
       } else {
         navigate("/civilian");
       }
+
       
     } catch (err) {
       setError(
