@@ -1,55 +1,61 @@
-import React, { useEffect, useState } from "react";
-import { FaHeart, FaRegHeart, FaComment } from "react-icons/fa";
-import { FaLocationDot } from "react-icons/fa6";
-import { MdEdit } from "react-icons/md";
-import { MdDelete } from "react-icons/md";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { MdEdit, MdDelete } from "react-icons/md";
+import { FaLocationDot, FaRegHeart, FaHeart, FaComment } from "react-icons/fa6";
 
-const FeedbackCard = ({ feedback, section }) => {
+const FeedbackCard = ({ feedback, section, onDeleted, onUpdated }) => {
   const [likes, setLikes] = useState(0);
-  const [comment, setComment] = useState("");
   const [comments, setComments] = useState([]);
-
   const [loadingDelete, setLoadingDelete] = useState(false);
   const [user, setUser] = useState();
-
   const navigate = useNavigate();
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("userData"));
-    if (user) setUser(user);
+    const userData = JSON.parse(localStorage.getItem("userData"));
+    if (userData) setUser(userData);
   }, []);
 
-  const handleLike = () => setLikes(likes + 1);
+  const handleLike = () => setLikes((s) => s + 1);
 
-  const handleComment = () => {
-    if (comment.trim()) {
-      setComments([...comments, comment]);
-      setComment("");
-    }
-  };
-
-  const handleEdit = () => {
-    navigate(`/civilian-update/${feedback.id}`);
-  };
+  const handleEdit = () => navigate(`/civilian-update/${feedback.id}`);
 
   const handleDelete = async () => {
+    console.log("handleDelete invoked for id:", feedback.id);
+    const token = user?.access_token;
+    if (!token) {
+      console.error("No token found in localStorage userData");
+      alert("You are not authenticated. Please login again.");
+      return;
+    }
+
+    if (!window.confirm("Are you sure you want to delete this feedback?")) return;
+
     try {
       setLoadingDelete(true);
-      const res = await axios.post(
-        `http://127.0.0.1:8000/api/feedback/delete/${feedback.id}`,
-        {},
+
+      const res = await axios.delete(
+        `http://127.0.0.1:8000/api/feedback/delete/${feedback.id}/`,
         {
-          headers: {
-            Authorization: `Bearer ${user?.access_token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      console.log(res);
-    } catch (error) {
-      console.error(error);
+      console.log("Delete response:", res.status, res.data);
+
+      // Defensive: convert id types consistently
+      const deletedId = Number(feedback.id);
+
+      // Notify parent to remove from its list
+      if (typeof onDeleted === "function") {
+        console.log("Calling onDeleted with id:", deletedId);
+        onDeleted(deletedId);
+      } else {
+        console.warn("onDeleted prop is not a function or not provided.");
+      }
+    } catch (err) {
+      console.error("Delete failed:", err.response ?? err);
+      alert("Delete failed: " + (err.response?.data?.detail ?? err.message));
     } finally {
       setLoadingDelete(false);
     }
@@ -71,11 +77,21 @@ transition-transform duration-300 hover:shadow-blue-500/30"
             <MdEdit
               className="cursor-pointer text-lg text-green-400 hover:text-green-500 inline mx-2"
               onClick={handleEdit}
-            />{" "}
-            <MdDelete
-              className="cursor-pointer text-lg text-red-400 hover:text-red-500 inline mx-2"
-              onClick={handleDelete}
             />
+            {/* Wrap the icon in a button so disabled works */}
+            <button
+              onClick={handleDelete}
+              disabled={loadingDelete}
+              aria-label="delete feedback"
+              className="inline mx-2"
+              title="Delete feedback"
+            >
+              <MdDelete
+                className={`cursor-pointer text-lg ${
+                  loadingDelete ? "text-gray-400" : "text-red-400 hover:text-red-500"
+                }`}
+              />
+            </button>
           </div>
         )}
       </div>
@@ -96,7 +112,7 @@ transition-transform duration-300 hover:shadow-blue-500/30"
       {/* Status Tag */}
       <span
         className={`inline-block px-3 py-1 mt-3 text-xs font-bold uppercase rounded-full ${
-          feedback.status === "Resolved"
+          String(feedback.status).toUpperCase() === "RESOLVED"
             ? "bg-green-600"
             : "bg-yellow-600 text-gray-100"
         }`}
@@ -106,7 +122,6 @@ transition-transform duration-300 hover:shadow-blue-500/30"
 
       {/* Like & Comment Section */}
       <div className="mt-4 flex items-center gap-4">
-        {/* Like Button */}
         <button
           onClick={handleLike}
           className="flex items-center gap-2 text-gray-400 hover:text-red-400 transition"
@@ -114,8 +129,6 @@ transition-transform duration-300 hover:shadow-blue-500/30"
           {likes > 0 ? <FaHeart className="text-red-500" /> : <FaRegHeart />}
           <span>{likes}</span>
         </button>
-
-        {/* Comment Button */}
 
         {section === "home" && (
           <button className="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition">
@@ -126,15 +139,8 @@ transition-transform duration-300 hover:shadow-blue-500/30"
       </div>
 
       {section === "home" && (
-        <button className="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition">
-          <FaComment />
-          <span>{comments.length}</span>
-        </button>
-      )}
-
-      {section === "home" && (
         <button
-          onClick={handleComment}
+          onClick={() => console.log("view more clicked")}
           className="mt-2 w-full bg-blue-600 py-2 rounded-md text-white hover:bg-blue-700 transition"
         >
           View More

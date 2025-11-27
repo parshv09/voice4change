@@ -56,6 +56,7 @@ const AdminDashboard = () => {
             },
           }
         );
+        console.log(res.data);
         setFeedbacks(res.data);
       } catch (error) {
         console.error(error);

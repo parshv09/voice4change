@@ -25,7 +25,8 @@ class AdminDashboardView(APIView):
     def get(self, request):
         today = now()
 
-        total_feedback = Feedback.objects.count()
+        total_feedback = Feedback.objects.filter(location__iexact=request.user.address).count()
+
         resolved_feedback = Feedback.objects.filter(status="resolved").count()
         pending_feedback = Feedback.objects.filter(status="pending").count()
         in_progress_feedback = Feedback.objects.filter(status="in-progress").count()
