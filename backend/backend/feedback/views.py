@@ -151,7 +151,7 @@ class FeedbackDetailView(generics.RetrieveAPIView):
     def retrieve(self, request, *args, **kwargs):
         response = super().retrieve(request, *args, **kwargs)
         language = request.GET.get('lang', 'en')
-        translator = Translator()
+        translator = GoogleTranslator(source='auto', target=language)
 
         response.data['title'] = translator.translate(response.data['title'], dest=language).text
         response.data['description'] = translator.translate(response.data['description'], dest=language).text

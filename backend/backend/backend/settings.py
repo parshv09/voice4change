@@ -48,8 +48,8 @@ CLOUDINARY_STORAGE = {
 }
 
 
-print(CLOUDINARY_STORAGE['CLOUD_NAME'])
-print(CLOUDINARY_STORAGE['API_KEY'])
+# print(CLOUDINARY_STORAGE['CLOUD_NAME'])
+# print(CLOUDINARY_STORAGE['API_KEY'])
 
 # Cloudinary Config
 cloudinary.config(
