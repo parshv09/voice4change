@@ -16,7 +16,10 @@ from datetime import timedelta  # For time-based filtering
 from difflib import SequenceMatcher  # For checking text similarity
 from django.utils.timezone import now  # To get the current timestamp
 import cloudinary.uploader
-import requests
+import requests  
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from rest_framework.pagination import PageNumberPagination
 
 # Configure Gemini API
 genai.configure(api_key=settings.GEMINI_API_KEY)
@@ -43,70 +46,45 @@ class FeedbackCreateView(generics.CreateAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-    
     def perform_create(self, serializer):
         user = self.request.user
         feedback = serializer.validated_data
         description = feedback.get("description", "")
 
-        # Get sentiment score (assuming your existing method)
+        # Get sentiment score
         sentiment_score = self.get_sentiment_score(description)
-
-        # Check rate limit: max 5 feedbacks/hour
+        
+         # Check if the user is sending too many feedbacks
         recent_feedbacks = Feedback.objects.filter(
             user=user,
-            created_at__gte=now() - timedelta(hours=1)
+            created_at__gte=now() - timedelta(hours=1)  # Last 1 hour
         )
-        if recent_feedbacks.count() >= 5:
+
+        if recent_feedbacks.count() >= 5:  # More than 5 complaints in 1 hour
             raise PermissionDenied("Too many feedback submissions. Try again later.")
 
-        # Check similarity to prevent duplicates
+        # Check if the feedback is very similar to previous submissions
         for fb in recent_feedbacks:
             similarity = SequenceMatcher(None, fb.description.lower(), description.lower()).ratio()
-            if similarity > 0.8:
+            if similarity > 0.8:  # More than 80% similarity
                 raise PermissionDenied("Duplicate or similar feedback detected!")
+        
+        
+        print(f"User: {self.request.user}")  # Debugging
+        print(f"Is Authenticated: {self.request.user.is_authenticated}")  # Debugging
 
-        # Ensure user is authenticated
-        if not user or user.is_anonymous:
+        if not self.request.user or self.request.user.is_anonymous:
             raise PermissionDenied("Authentication required to submit feedback.")
+        # Save feedback with sentiment score
+        serializer.save(user=self.request.user, sentiment_score=sentiment_score)
 
-        # Get location and photo from request data
-        location = self.request.data.get("location")
-        photo = self.request.FILES.get("photo")
-
-        if not location:
-            raise PermissionDenied("Location data is required.")
-
-        # Upload photo to Cloudinary if photo is provided
-        photo_url = None
-        if photo:
-            upload_result = cloudinary.uploader.upload(photo)
-            photo_url = upload_result.get("secure_url")
-
-            latitude = self.request.data.get('latitude')
-            longitude = self.request.data.get('longitude')
-
-            if not latitude or not longitude:
-                raise PermissionDenied("Both latitude and longitude are required.")
-
-            location_name = get_location_name(latitude, longitude)
-
-            # Save all three
-            serializer.save(user=user, sentiment_score=sentiment_score,
-                            latitude=latitude, longitude=longitude,
-                            location=location_name, photo=photo_url)
-
-    
-   
-
-    
 
     def get_sentiment_score(self, text):
         """Analyze sentiment score using the free Gemini model"""
         try:
             genai.configure(api_key=settings.GEMINI_API_KEY)
             
-            model = genai.GenerativeModel("models/gemini-1.5-flash")  # FREE MODEL
+            model = genai.GenerativeModel("models/gemini-2.5-flash") # Update to current free model  # FREE MODEL
             response = model.generate_content(
                 f"Analyze the sentiment of this text and return only a numerical score between -1 (very negative) "
                 f"and 1 (very positive), with 0 being neutral. No explanation, just the number:\n\n{text}"
@@ -124,10 +102,7 @@ class FeedbackCreateView(generics.CreateAPIView):
         except Exception as e:
             print(f"Sentiment analysis error: {e}")
             return 0.0  # Default score if API call fails
-        
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
-from rest_framework.pagination import PageNumberPagination
+
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 20
@@ -184,6 +159,7 @@ class FeedbackDetailView(generics.RetrieveAPIView):
         return response
     
 
+# views.py
 class FeedbackUpdateView(generics.UpdateAPIView):
     queryset = Feedback.objects.all()
     serializer_class = FeedbackUpdateSerializer
@@ -191,11 +167,23 @@ class FeedbackUpdateView(generics.UpdateAPIView):
     authentication_classes = [JWTAuthentication]
 
     def get_queryset(self):
-        return Feedback.objects.filter(user=self.request.user)
+        user = self.request.user
+        # Allow staff/superuser or authority role to edit all
+        if user.is_staff or user.is_superuser or getattr(user, "role", "").lower() in ("authority", "admin", "authority"):
+            return Feedback.objects.all()
+        return Feedback.objects.filter(user=user)
 
     def update(self, request, *args, **kwargs):
-        response = super().update(request, *args, **kwargs)
-        return Response({"message": "Feedback updated successfully", "status": response.data.get("status")})
+        # ensure PATCH is handled as partial
+        partial = kwargs.pop("partial", False) or (request.method.lower() == "patch")
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        if not serializer.is_valid():
+            print("Serializer errors on update:", serializer.errors)
+            return Response(serializer.errors, status=400)
+        self.perform_update(serializer)
+        return Response({"message": "Feedback updated successfully", "feedback": serializer.data})
+
 
 
 class FeedbackDeleteView(generics.DestroyAPIView):
@@ -228,7 +216,7 @@ class AdminFeedbackView(generics.ListAPIView):
         print(f"Feedback Locations: {Feedback.objects.values_list('location', flat=True)}")
 
         # Ensure the user is an admin
-        if user.role == 'ADMIN':
+        if user.role == 'Authority':
             return Feedback.objects.filter(location__iexact=user.address).select_related('user')  # Optimize query
         else:
             return Feedback.objects.none()  # Return empty queryset if not admin

@@ -61,6 +61,10 @@ const MyFeedbacks = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
   };
+    const handleDeleted = (deletedId) => {
+    console.log("handleDeleted called for id:", deletedId);
+    setData((prev) => prev.filter((f) => Number(f.id) !== Number(deletedId)));
+  };
 
   const handleUpdateFeedback = (updatedFeedback) => {
     setData((prev) =>
@@ -90,6 +94,7 @@ const MyFeedbacks = () => {
               key={feedback.id}
               feedback={feedback}
               section="myfeedbacks"
+              onDeleted={handleDeleted}  
             />
           ))
         ) : (

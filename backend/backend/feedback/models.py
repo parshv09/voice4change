@@ -14,6 +14,7 @@ class Feedback(models.Model):
     class Status(models.TextChoices):
         SUBMITTED = 'SUBMITTED', 'Submitted'
         UNDER_REVIEW = 'UNDER_REVIEW', 'Under Review'
+        IN_PROGRESS = 'IN PROGRESS', 'In Progress'
         RESOLVED = 'RESOLVED', 'Resolved'
         REJECTED = 'REJECTED', 'Rejected'
     
@@ -39,13 +40,11 @@ class Feedback(models.Model):
          
     user = models.ForeignKey(UserAccount, on_delete=models.SET_NULL, null=True, related_name='feedbacks')
     
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=500)
     description = models.TextField()
     feedback_type = models.CharField(max_length=20, choices=FeedbackType.choices)
     category = models.CharField(max_length=20, choices=Category.choices)  # Updated to use choices
-    photo = CloudinaryField('feedback_image', blank=True, null=True)
-    latitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
-    longitude = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    photo = CloudinaryField('feedback_image', folder='feedbacks/images', blank=True, null=True)
     location = models.CharField(max_length=200, blank=True)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.SUBMITTED)
     created_at = models.DateTimeField(default=timezone.now)

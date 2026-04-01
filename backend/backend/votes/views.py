@@ -11,8 +11,9 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from .serializers import UpvoteSerializer, DownvoteSerializer
 from authentication.utils import CookieJWTAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
-
-
+from django.shortcuts import get_object_or_404
+from django.db import transaction
+from rest_framework.views import APIView
 
 class UpvoteFeedbackView(generics.CreateAPIView):
     serializer_class = UpvoteSerializer
@@ -20,18 +21,47 @@ class UpvoteFeedbackView(generics.CreateAPIView):
     authentication_classes = [JWTAuthentication]
 
     def post(self, request, feedback_id):
-        feedback = Feedback.objects.get(id=feedback_id)
+        feedback = get_object_or_404(Feedback, id=feedback_id)
         user = request.user
 
-        # Check if the user already upvoted
         if Upvote.objects.filter(user=user, feedback=feedback).exists():
-            return Response({'message': 'You have already upvoted this feedback.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'Already upvoted'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Create upvote
-        Upvote.objects.create(user=user, feedback=feedback)
-        feedback.update_upvotes()
+        with transaction.atomic():
+            Upvote.objects.create(user=user, feedback=feedback)
+            feedback.update_upvotes()
 
-        return Response({'message': 'Feedback upvoted successfully'}, status=status.HTTP_201_CREATED)
+        return Response({
+            'message': 'Feedback upvoted successfully',
+            'upvotes': feedback.upvotes,
+            'downvotes': feedback.downvotes,
+        }, status=status.HTTP_201_CREATED)
+
+
+from .models import Upvote  # ensure correct import path to your Upvote model
+
+class ToggleUpvoteView(APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication]
+
+    def post(self, request, feedback_id):
+        feedback = get_object_or_404(Feedback, id=feedback_id)
+        user = request.user
+
+        with transaction.atomic():
+            existing = Upvote.objects.filter(user=user, feedback=feedback).first()
+            if existing:
+                # Remove upvote
+                existing.delete()
+                feedback.update_upvotes()
+                action = "removed"
+            else:
+                # Create upvote
+                Upvote.objects.create(user=user, feedback=feedback)
+                feedback.update_upvotes()
+                action = "upvoted"
+
+        return Response({"action": action, "upvotes": feedback.upvotes}, status=status.HTTP_200_OK)
 
 class TrendingFeedbackView(generics.ListAPIView):
     serializer_class = FeedbackSerializer

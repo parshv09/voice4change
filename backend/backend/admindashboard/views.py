@@ -24,11 +24,13 @@ class AdminDashboardView(APIView):
 
     def get(self, request):
         today = now()
+        user_address = request.user.address
 
-        total_feedback = Feedback.objects.count()
-        resolved_feedback = Feedback.objects.filter(status="resolved").count()
-        pending_feedback = Feedback.objects.filter(status="pending").count()
-        in_progress_feedback = Feedback.objects.filter(status="in-progress").count()
+        total_feedback = Feedback.objects.filter(location__iexact=request.user.address).count()
+
+        resolved_feedback = Feedback.objects.filter(status="RESOLVED",location__iexact=user_address).count()
+        pending_feedback = Feedback.objects.filter(status="SUBMITTED",location__iexact=user_address).count()
+        in_progress_feedback = Feedback.objects.filter(status="IN PROGRESS",location__iexact=user_address).count()
 
         category_stats = Feedback.objects.values("category").annotate(total=Count("id"))
 
@@ -41,7 +43,7 @@ class AdminDashboardView(APIView):
             .values("category", "title", "urgency")
             .order_by("-urgency")[:5]  # Sort by urgency (high to low)
         )
-
+        print(pending_feedback)
         return Response({
             "total_feedback": total_feedback,
             "resolved_feedback": resolved_feedback,
