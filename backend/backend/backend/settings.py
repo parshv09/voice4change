@@ -221,7 +221,7 @@ SIMPLE_JWT = {
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://voice4change-git-parshv-parshv09s-projects.vercel.app"
+    "https://voice4change.vercel.app"
 ]
 CORS_ALLOW_CREDENTIALS = True
 
