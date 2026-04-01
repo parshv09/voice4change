@@ -16,7 +16,10 @@ from datetime import timedelta  # For time-based filtering
 from difflib import SequenceMatcher  # For checking text similarity
 from django.utils.timezone import now  # To get the current timestamp
 import cloudinary.uploader
-import requests
+import requests  
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from rest_framework.pagination import PageNumberPagination
 
 # Configure Gemini API
 genai.configure(api_key=settings.GEMINI_API_KEY)
@@ -81,7 +84,7 @@ class FeedbackCreateView(generics.CreateAPIView):
         try:
             genai.configure(api_key=settings.GEMINI_API_KEY)
             
-            model = genai.GenerativeModel("models/gemini-1.5-flash")  # FREE MODEL
+            model = genai.GenerativeModel("models/gemini-2.5-flash") # Update to current free model  # FREE MODEL
             response = model.generate_content(
                 f"Analyze the sentiment of this text and return only a numerical score between -1 (very negative) "
                 f"and 1 (very positive), with 0 being neutral. No explanation, just the number:\n\n{text}"
@@ -99,10 +102,7 @@ class FeedbackCreateView(generics.CreateAPIView):
         except Exception as e:
             print(f"Sentiment analysis error: {e}")
             return 0.0  # Default score if API call fails
-        
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
-from rest_framework.pagination import PageNumberPagination
+
 
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 20
@@ -159,6 +159,7 @@ class FeedbackDetailView(generics.RetrieveAPIView):
         return response
     
 
+# views.py
 class FeedbackUpdateView(generics.UpdateAPIView):
     queryset = Feedback.objects.all()
     serializer_class = FeedbackUpdateSerializer
@@ -166,11 +167,23 @@ class FeedbackUpdateView(generics.UpdateAPIView):
     authentication_classes = [JWTAuthentication]
 
     def get_queryset(self):
-        return Feedback.objects.filter(user=self.request.user)
+        user = self.request.user
+        # Allow staff/superuser or authority role to edit all
+        if user.is_staff or user.is_superuser or getattr(user, "role", "").lower() in ("authority", "admin", "authority"):
+            return Feedback.objects.all()
+        return Feedback.objects.filter(user=user)
 
     def update(self, request, *args, **kwargs):
-        response = super().update(request, *args, **kwargs)
-        return Response({"message": "Feedback updated successfully", "status": response.data.get("status")})
+        # ensure PATCH is handled as partial
+        partial = kwargs.pop("partial", False) or (request.method.lower() == "patch")
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        if not serializer.is_valid():
+            print("Serializer errors on update:", serializer.errors)
+            return Response(serializer.errors, status=400)
+        self.perform_update(serializer)
+        return Response({"message": "Feedback updated successfully", "feedback": serializer.data})
+
 
 
 class FeedbackDeleteView(generics.DestroyAPIView):

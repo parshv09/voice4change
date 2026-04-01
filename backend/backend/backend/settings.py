@@ -220,3 +220,5 @@ CORS_ALLOW_CREDENTIALS = True
 
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
