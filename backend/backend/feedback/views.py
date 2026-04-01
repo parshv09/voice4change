@@ -7,7 +7,7 @@ from django.conf import settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from authentication.utils import CookieJWTAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 import google.generativeai as genai
 import re
 from rest_framework.response import Response
@@ -126,7 +126,7 @@ class FeedbackListView(generics.ListAPIView):
         language = request.GET.get("lang", "en")
 
         if language != "en":  # Only translate if another language is requested
-            translator = Translator()
+            translator = GoogleTranslator(source='auto', target=language)
             # Check if data is paginated (dict with "results")
             feedback_list = response.data.get("results", response.data)
 
