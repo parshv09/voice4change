@@ -7,7 +7,7 @@ from django.conf import settings
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from authentication.utils import CookieJWTAuthentication
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 import google.generativeai as genai
 import re
 from rest_framework.response import Response
@@ -126,17 +126,17 @@ class FeedbackListView(generics.ListAPIView):
         language = request.GET.get("lang", "en")
 
         if language != "en":  # Only translate if another language is requested
-            translator = Translator()
+            translator = GoogleTranslator(source='auto', target=language)
             # Check if data is paginated (dict with "results")
             feedback_list = response.data.get("results", response.data)
 
             for feedback in feedback_list:
                 feedback["title"] = translator.translate(
                     feedback["title"], dest=language
-                ).text
+                )
                 feedback["description"] = translator.translate(
                     feedback["description"], dest=language
-                ).text
+                )
         else:
             return response
         return response
@@ -151,10 +151,10 @@ class FeedbackDetailView(generics.RetrieveAPIView):
     def retrieve(self, request, *args, **kwargs):
         response = super().retrieve(request, *args, **kwargs)
         language = request.GET.get('lang', 'en')
-        translator = Translator()
+        translator = GoogleTranslator(source='auto', target=language)
 
-        response.data['title'] = translator.translate(response.data['title'], dest=language).text
-        response.data['description'] = translator.translate(response.data['description'], dest=language).text
+        response.data['title'] = translator.translate(response.data['title'], dest=language)
+        response.data['description'] = translator.translate(response.data['description'], dest=language)
 
         return response
     

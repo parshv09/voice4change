@@ -1,3 +1,4 @@
+import config from "../config";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   FiAlertCircle,
@@ -62,7 +63,7 @@ const AdminDashboard = () => {
     const fetchFeedbacks = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`http://127.0.0.1:8000/api/feedback/admin/`, {
+        const res = await axios.get(`${config.API_BASE_URL}/api/feedback/admin/`, {
           headers: {
             Authorization: `Bearer ${parsedUser?.access_token}`,
             "Content-Type": "application/json",
@@ -102,7 +103,7 @@ const AdminDashboard = () => {
       try {
         setLoading(true);
         const res = await axios.get(
-          "http://127.0.0.1:8000/api/admin-dashboard/dashboard",
+          `${config.API_BASE_URL}/api/admin-dashboard/dashboard`,
           {
             headers: {
               Authorization: `Bearer ${parsedUser?.access_token}`,
@@ -123,7 +124,7 @@ const AdminDashboard = () => {
   const handleLogout = async () => {
     try {
       const res = await axios.post(
-        "http://127.0.0.1:8000/api/auth/logout/",
+        `${config.API_BASE_URL}/api/auth/logout/`,
         {},
         {
           headers: {
@@ -151,7 +152,7 @@ const handleStatusUpdate = async (newStatus, id) => {
 
   try {
     const res = await axios.patch(
-      `http://127.0.0.1:8000/api/feedback/update/${id}/`,
+      `${config.API_BASE_URL}/api/feedback/update/${id}/`,
       payload,
       {
         headers: {

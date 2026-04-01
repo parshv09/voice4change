@@ -1,3 +1,4 @@
+import config from "../config";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -78,7 +79,7 @@ const Registration = () => {
     formData.append("password", d.password);
 
     try {
-      await axios.post("http://127.0.0.1:8000/api/auth/register/", formData, {
+      await axios.post(`${config.API_BASE_URL}/api/auth/register/`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },

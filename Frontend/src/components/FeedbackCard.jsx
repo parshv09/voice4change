@@ -1,3 +1,4 @@
+import config from "../config";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -45,7 +46,7 @@ useEffect(() => {
       setLoadingDelete(true);
 
       const res = await axios.delete(
-        `http://127.0.0.1:8000/api/feedback/delete/${feedback.id}/`,
+        `${config.API_BASE_URL}/api/feedback/delete/${feedback.id}/`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -86,7 +87,7 @@ useEffect(() => {
 
   try {
     const res = await axios.post(
-      `http://127.0.0.1:8000/api/vote/feedback/upvote/${feedback.id}/`,
+      `${config.API_BASE_URL}/api/vote/feedback/upvote/${feedback.id}/`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );

@@ -45,8 +45,9 @@ protobuf==5.29.4
 psycopg2-binary==2.9.10
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
-pydantic==2.11.1
-pydantic_core==2.33.0
+pydantic==1.10.13
+setuptools>=68
+wheel
 PyJWT==2.9.0
 pyparsing==3.2.3
 python-dotenv==1.0.1
@@ -66,3 +67,5 @@ tzdata==2025.1
 uritemplate==4.1.1
 urllib3==2.3.0
 wrapt==1.17.2
+gunicorn==25.3.0
+deep-translator==1.11.4

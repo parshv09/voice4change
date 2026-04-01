@@ -1,3 +1,4 @@
+import config from "../config";
 import React, { useEffect, useState } from "react";
 import FeedbackCard from "../components/FeedbackCard";
 import {
@@ -38,7 +39,7 @@ const CivilianHome = () => {
   try {
     setLoading(true);
     const res = await axios.get(
-      `http://127.0.0.1:8000/api/feedback/list?feedback_type=${feedbackType}&category=${category}&status=${status}&urgency=${urgency}&search=${searchQuery.trim().toLowerCase()}`,
+      `${config.API_BASE_URL}/api/feedback/list?feedback_type=${feedbackType}&category=${category}&status=${status}&urgency=${urgency}&search=${searchQuery.trim().toLowerCase()}`,
       {
         headers: {
           Authorization: `Bearer ${user?.access_token}`,

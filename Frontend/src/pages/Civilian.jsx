@@ -1,3 +1,4 @@
+import config from "../config";
 import React, { useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Home from "../pages/CivilianHome";
@@ -21,7 +22,7 @@ const CivilianDashboard = () => {
   const handleLogout = async () => {
     try {
       const res = await axios.post(
-        "http://127.0.0.1:8000/api/auth/logout/",
+        `${config.API_BASE_URL}/api/auth/logout/`,
         {},
         {
           headers: {
