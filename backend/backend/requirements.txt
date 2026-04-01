@@ -45,11 +45,14 @@ protobuf==5.29.4
 psycopg2-binary==2.9.10
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
-pydantic==2.11.1
+pydantic==1.10.13
+setuptools>=68
+wheel
 pydantic_core==2.33.0
 PyJWT==2.9.0
 pyparsing==3.2.3
 python-dotenv==1.0.1
+python-3.11.5
 pytz==2025.2
 PyYAML==6.0.2
 redis==4.3.4
