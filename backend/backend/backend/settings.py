@@ -64,15 +64,13 @@ DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 AUTH_USER_MODEL = "authentication.UserAccount"
 ALLOWED_HOSTS = ['*']
-CORS_ALLOWED_ORIGINS = [
-    "https://voice4change-git-parshv-parshv09s-projects.vercel.app",
-]
+
 from corsheaders.defaults import default_headers
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
     'authorization',
 ]
-CORS_ALLOW_CREDENTIALS = True
+
 
 # Application definition
 
@@ -223,6 +221,7 @@ SIMPLE_JWT = {
 # CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "https://voice4change-git-parshv-parshv09s-projects.vercel.app"
 ]
 CORS_ALLOW_CREDENTIALS = True
 
