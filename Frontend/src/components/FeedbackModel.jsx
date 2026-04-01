@@ -1,3 +1,4 @@
+import config from "../config";
 import axios from "axios";
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
@@ -27,7 +28,7 @@ const FeedbackDetails = () => {
       try {
         setLoading(true);
         const res = await axios.get(
-          `http://127.0.0.1:8000/api/feedback/${id}/`,
+          `${config.API_BASE_URL}/api/feedback/${id}/`,
           {
             headers: {
               Authorization: `Bearer ${user?.access_token}`,
@@ -52,7 +53,7 @@ const FeedbackDetails = () => {
   const handleUpdate = async () => {
     try {
       const response = await axios.patch(
-        `http://127.0.0.1:8000/api/feedback/update/${id}`,
+        `${config.API_BASE_URL}/api/feedback/update/${id}`,
         {
           formData,
         },

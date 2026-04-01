@@ -1,3 +1,4 @@
+import config from "../config";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
@@ -33,7 +34,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/auth/login/",
+        `${config.API_BASE_URL}/api/auth/login/`,
         d
       );
       console.log("Login successful:", response.data);

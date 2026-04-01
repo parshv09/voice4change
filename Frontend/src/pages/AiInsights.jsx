@@ -1,3 +1,4 @@
+import config from "../config";
 import React, { useState, useEffect } from "react";
 import { FiBarChart2, FiPieChart, FiTrendingUp, FiClock } from "react-icons/fi";
 import { motion } from "framer-motion";
@@ -31,7 +32,7 @@ const AiInsights = () => {
       try {
         setLoading(true);
         const res = await axios.get(
-          "http://127.0.0.1:8000/api/ai/ai-insights/",
+          `${config.API_BASE_URL}/api/ai/ai-insights/`,
           {
             headers: { Authorization: `Bearer ${user?.access_token}` },
           }

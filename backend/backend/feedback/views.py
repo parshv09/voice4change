@@ -133,10 +133,10 @@ class FeedbackListView(generics.ListAPIView):
             for feedback in feedback_list:
                 feedback["title"] = translator.translate(
                     feedback["title"], dest=language
-                ).text
+                )
                 feedback["description"] = translator.translate(
                     feedback["description"], dest=language
-                ).text
+                )
         else:
             return response
         return response
@@ -153,8 +153,8 @@ class FeedbackDetailView(generics.RetrieveAPIView):
         language = request.GET.get('lang', 'en')
         translator = GoogleTranslator(source='auto', target=language)
 
-        response.data['title'] = translator.translate(response.data['title'], dest=language).text
-        response.data['description'] = translator.translate(response.data['description'], dest=language).text
+        response.data['title'] = translator.translate(response.data['title'], dest=language)
+        response.data['description'] = translator.translate(response.data['description'], dest=language)
 
         return response
     

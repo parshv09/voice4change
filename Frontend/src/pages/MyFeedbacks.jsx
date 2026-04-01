@@ -1,3 +1,4 @@
+import config from "../config";
 import React, { useEffect, useState } from "react";
 import FeedbackCard from "../components/FeedbackCard";
 import axios from "axios";
@@ -17,7 +18,7 @@ const MyFeedbacks = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await axios.get("http://127.0.0.1:8000/api/feedback/user/", {
+        const res = await axios.get(`${config.API_BASE_URL}/api/feedback/user/`, {
           headers: {
             Authorization: `Bearer ${user?.access_token}`,
           },
@@ -40,7 +41,7 @@ const MyFeedbacks = () => {
       try {
         setLoading(true);
         const res = await axios.get(
-          `http://127.0.0.1:8000/api/feedback/list/?lang=${lang}`,
+          `${config.API_BASE_URL}/api/feedback/list/?lang=${lang}`,
           {
             headers: {
               Authorization: `Bearer ${user?.access_token}`,

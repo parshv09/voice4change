@@ -1,3 +1,4 @@
+import config from "../config";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -107,7 +108,7 @@ export default function CreateFeedback() {
       const token = user?.access_token;
 
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/feedback/create/",
+        `${config.API_BASE_URL}/api/feedback/create/`,
         formData,
         {
           headers: {
