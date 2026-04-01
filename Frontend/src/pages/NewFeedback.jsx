@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import axios from "axios";
 
@@ -36,13 +36,16 @@ const feedbackSchema = z.object({
   location: z.string().min(3, "Location must be at least 3 characters"),
   isAnonymous: z.boolean(),
   urgency: z.enum(["LOW", "MEDIUM", "HIGH"]),
-  feedbackImage: z.any().optional(),
+  photo: z.any().refine((file) => file.length > 0, "File is required"),
 });
 
 export default function CreateFeedback() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [user, setUser] = useState();
+
+  // file ref (safer to read file)
+  const fileRef = useRef(null);
 
   const {
     register,
@@ -51,41 +54,79 @@ export default function CreateFeedback() {
     reset,
   } = useForm({
     resolver: zodResolver(feedbackSchema),
+    defaultValues: {
+      isAnonymous: false,
+      feedback_type: "COMPLAINT",
+      category: "INFRASTRUCTURE",
+      urgency: "LOW",
+    },
   });
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("userData"));
-    if (user) {
-      setUser(user);
+    const stored = localStorage.getItem("userData");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setUser(parsed);
+      } catch {
+        // ignore
+      }
     }
   }, []);
 
   const onSubmit = async (d) => {
-    console.log("Submitted Feedback:", d);
-
+    console.log("Submitted Feedback (form values):", d);
     setLoading(true);
     setError(null);
 
     try {
+      const formData = new FormData();
+
+      // Append fields (match backend names)
+      formData.append("title", d.title);
+      formData.append("description", d.description);
+      formData.append("feedback_type", d.feedback_type);
+      formData.append("category", d.category);
+      formData.append("location", d.location);
+      formData.append("urgency", d.urgency);
+
+      // Backend expects is_anonymous (snake_case) based on previous messages
+      formData.append("is_anonymous", d.isAnonymous ? "true" : "false");
+
+      // Read file from ref and append using backend field name "photo"
+      if (d.photo && d.photo.length > 0) {
+        formData.append("photo", d.photo[0]);
+      }
+
+      // Debug: log FormData entries so you can inspect in console
+      for (const pair of formData.entries()) {
+        // File objects will show as File {...}
+        console.log("formData entry:", pair[0], pair[1]);
+      }
+
+      const token = user?.access_token;
+
       const response = await axios.post(
         "http://127.0.0.1:8000/api/feedback/create/",
-        d,
+        formData,
         {
           headers: {
-            Authorization: `Bearer ${user?.access_token}`,
+            Authorization: `Bearer ${token}`,
+            // Do NOT set Content-Type manually; browser will set boundary
           },
         }
       );
-      console.log("New feedback created successful:", response.data);
+
+      console.log("New feedback created successfully:", response.data);
       toast.success("New feedback created");
+
+      // clear form + file input
       reset();
+      if (fileRef.current) fileRef.current.value = null;
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-          err.response?.data?.detail ||
-          "An error occurred"
-      );
-      console.error("Feedback creation failed:", err);
+      console.error("Feedback creation failed:", err.response?.data ?? err.message ?? err);
+      setError(err.response?.data?.detail ?? err.response?.data ?? "An error occurred");
+      toast.error("Creation failed");
     } finally {
       setLoading(false);
     }
@@ -137,16 +178,13 @@ export default function CreateFeedback() {
               {...register("feedback_type")}
               className="w-full p-3 bg-gray-700 rounded-lg outline-none text-white focus:ring-2 focus:ring-blue-500"
             >
-              {[
-                "COMPLAINT",
-                "SUGGESTION",
-                "GENERAL COMMENT",
-                "POLICY IDEA",
-              ].map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
+              {["COMPLAINT", "SUGGESTION", "GENERAL COMMENT", "POLICY IDEA"].map(
+                (type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                )
+              )}
             </select>
           </div>
 
@@ -225,8 +263,11 @@ export default function CreateFeedback() {
           <div className="mb-4">
             <label className="block text-white">Upload Image</label>
             <input
+              id="photo"
               type="file"
-              {...register("feedbackImage")}
+              accept="image/*"
+              ref={fileRef}
+              {...register("photo")}
               className="w-full p-3 bg-gray-700 rounded-lg outline-none text-white focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -236,8 +277,11 @@ export default function CreateFeedback() {
             type="submit"
             className="w-full p-3 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg text-white text-lg font-semibold shadow-md hover:opacity-90 transition-all duration-300"
           >
-            {loading ? "Submiting..." : " Submit Feedback 🚀"}
+            {loading ? "Submitting..." : " Submit Feedback 🚀"}
           </button>
+
+          {/* Optional error display */}
+          {error && <p className="mt-3 text-sm text-red-400">{String(error)}</p>}
         </form>
       </div>
       <ToastContainer />

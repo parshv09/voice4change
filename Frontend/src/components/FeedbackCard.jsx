@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { MdEdit, MdDelete } from "react-icons/md";
 import { FaLocationDot, FaRegHeart, FaHeart, FaComment } from "react-icons/fa6";
-
+import { FaRegThumbsUp, FaThumbsUp } from "react-icons/fa"; // add this
 const FeedbackCard = ({ feedback, section, onDeleted, onUpdated }) => {
   const [likes, setLikes] = useState(0);
   const [comments, setComments] = useState([]);
@@ -15,6 +15,16 @@ const FeedbackCard = ({ feedback, section, onDeleted, onUpdated }) => {
     const userData = JSON.parse(localStorage.getItem("userData"));
     if (userData) setUser(userData);
   }, []);
+ // Upvote related
+const [upvotes, setUpvotes] = useState(Number(feedback.upvotes) || 0);
+const [userUpvoted, setUserUpvoted] = useState(Boolean(feedback.user_upvoted));
+const [loadingUpvote, setLoadingUpvote] = useState(false);
+
+
+useEffect(() => {
+  setUpvotes(Number(feedback.upvotes) || 0);
+  setUserUpvoted(Boolean(feedback.user_upvoted));
+}, [feedback.upvotes, feedback.user_upvoted]);
 
   const handleLike = () => setLikes((s) => s + 1);
 
@@ -60,6 +70,49 @@ const FeedbackCard = ({ feedback, section, onDeleted, onUpdated }) => {
       setLoadingDelete(false);
     }
   };
+  const handleUpvote = async () => {
+  const token = user?.access_token;
+  if (!token) {
+    alert("Please login to upvote.");
+    return;
+  }
+  if (loadingUpvote) return;
+
+  setLoadingUpvote(true);
+
+  // optimistic UI
+  setUserUpvoted((prev) => !prev);
+  setUpvotes((prev) => (userUpvoted ? Math.max(0, prev - 1) : prev + 1));
+
+  try {
+    const res = await axios.post(
+      `http://127.0.0.1:8000/api/vote/feedback/upvote/${feedback.id}/`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    const { action, upvotes: serverUpvotes } = res.data;
+    setUpvotes(Number(serverUpvotes));
+    setUserUpvoted(action === "upvoted");
+
+    // keep parent list in sync
+    if (typeof onUpdated === "function") {
+      onUpdated({
+        ...feedback,
+        upvotes: Number(serverUpvotes),
+        user_upvoted: action === "upvoted",
+      });
+    }
+  } catch (err) {
+    console.error("Upvote toggle failed:", err.response ?? err);
+    // rollback optimistic change on error
+    setUserUpvoted((prev) => !prev);
+    setUpvotes((prev) => (userUpvoted ? prev + 1 : Math.max(0, prev - 1)));
+    alert(err.response?.data?.detail ?? "Upvote failed");
+  } finally {
+    setLoadingUpvote(false);
+  }
+};
 
   return (
     <div
@@ -121,14 +174,22 @@ transition-transform duration-300 hover:shadow-blue-500/30"
       </span>
 
       {/* Like & Comment Section */}
+           {/* Like, Upvote & Comment Section */}
       <div className="mt-4 flex items-center gap-4">
-        <button
+        {/* local like */}
+        {/* <button
           onClick={handleLike}
           className="flex items-center gap-2 text-gray-400 hover:text-red-400 transition"
         >
           {likes > 0 ? <FaHeart className="text-red-500" /> : <FaRegHeart />}
           <span>{likes}</span>
-        </button>
+        </button> */}
+
+        {/* Upvote button (integrated with backend) */}
+       <button onClick={handleUpvote} disabled={loadingUpvote} title="Upvote">
+  { userUpvoted ? <FaThumbsUp className="text-green-400" /> : <FaRegThumbsUp /> }  <div><span>{upvotes}</span></div>
+
+</button>
 
         {section === "home" && (
           <button className="flex items-center gap-2 text-gray-400 hover:text-blue-400 transition">
