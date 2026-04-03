@@ -1,6 +1,7 @@
 import config from "../config";
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import ButtonSpinner from "./ButtonSpinner";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
@@ -288,7 +289,7 @@ const Registration = () => {
             className="col-span-1 md:col-span-2 bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-xl transition shadow-lg"
             disabled={loading}
           >
-            {loading ? "Registering..." : "Register"}
+            {loading ? <ButtonSpinner text="Creating Account..." /> : "Register"}
           </button>
         </form>
 

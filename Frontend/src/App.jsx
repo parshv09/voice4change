@@ -10,6 +10,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminAuthProvider from "./components/AdminAuthProvider";
 import FeedbackManagement from "./pages/FeedbackManagement";
 import AiInsights from "./pages/AiInsights";
+import AdminLayout from "./components/AdminLayout";
+import Profile from "./pages/Profile";
 
 export default function App() {
   return (
@@ -38,26 +40,15 @@ export default function App() {
           path="/admin"
           element={
             <AdminAuthProvider>
-              <AdminDashboard />
+              <AdminLayout />
             </AdminAuthProvider>
           }
-        />
-        <Route
-          path="/admin/feedback-management"
-          element={
-            <AdminAuthProvider>
-              <FeedbackManagement />
-            </AdminAuthProvider>
-          }
-        />
-        <Route
-          path="/admin/aiinsights"
-          element={
-            <AdminAuthProvider>
-              <AiInsights />
-            </AdminAuthProvider>
-          }
-        />
+        >
+          <Route index element={<AdminDashboard />} />
+          <Route path="feedback-management" element={<FeedbackManagement />} />
+          <Route path="aiinsights" element={<AiInsights />} />
+          <Route path="profile" element={<Profile />} />
+        </Route>
       </Routes>
     </>
   );

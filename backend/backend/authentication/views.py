@@ -174,10 +174,18 @@ class LogoutView(APIView):
     
 class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
-    authentication_classes = [CookieJWTAuthentication]  # Use cookie-based authentication
 
     def get(self, request):
         
         user = request.user  # User is set after successful authentication
         serializer = UserProfileSerializer(user)
         return Response(serializer.data)
+
+    def patch(self, request):
+        user = request.user
+        # partial=True allows partial updates (only provided fields are changed)
+        serializer = UserProfileSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

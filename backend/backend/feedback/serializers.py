@@ -11,10 +11,22 @@ class UserSerializer(serializers.ModelSerializer):
 
 class FeedbackSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
+    photo = serializers.SerializerMethodField()
+    
     class Meta:
         model = Feedback
         fields = '__all__'
         read_only_fields = ['id', 'created_at', 'updated_at', 'keywords']
+        
+    def get_photo(self, obj):
+        if obj.photo:
+            try:
+                return obj.photo.url
+            except AttributeError:
+                # Fallback if Cloudinary hasn't generated the url
+                return str(obj.photo)
+        return None
+
     def get_user_upvoted(self, obj):
         request = self.context.get("request", None)
         if request and request.user and request.user.is_authenticated:
