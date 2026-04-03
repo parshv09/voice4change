@@ -40,7 +40,7 @@ const CivilianHome = () => {
       try {
         setLoading(true);
         const res = await axios.get(
-          `${config.API_BASE_URL}/api/feedback/list?feedback_type=${feedbackType}&category=${category}&status=${status}&urgency=${urgency}&search=${searchQuery.trim().toLowerCase()}`,
+          `${config.API_BASE_URL}/api/feedback/list/?feedback_type=${feedbackType}&category=${category}&status=${status}&urgency=${urgency}&search=${searchQuery.trim().toLowerCase()}`,
           {
             headers: {
               Authorization: `Bearer ${user?.access_token}`,
