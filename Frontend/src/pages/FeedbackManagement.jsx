@@ -79,7 +79,7 @@ const FeedbackManagement = () => {
         if (category) params.append("category", category);
         if (debouncedSearch) params.append("search", debouncedSearch);
 
-        const url = `${config.API_BASE_URL}/api/feedback/admin${params.toString() ? "?" + params.toString() : ""}`;
+        const url = `${config.API_BASE_URL}/api/feedback/admin/${params.toString() ? "?" + params.toString() : ""}`;
 
         const res = await axios.get(url, {
           headers: { Authorization: `Bearer ${parsedUser?.access_token}` },
@@ -104,7 +104,7 @@ const FeedbackManagement = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const res = await axios.get(`${config.API_BASE_URL}/api/admin-dashboard/dashboard`, {
+        const res = await axios.get(`${config.API_BASE_URL}/api/admin-dashboard/dashboard/`, {
           headers: { Authorization: `Bearer ${parsedUser?.access_token}` },
         });
         setStats(res.data);
@@ -139,7 +139,7 @@ const FeedbackManagement = () => {
     } catch (err) {
       console.error("updateStatus error:", err.response?.data ?? err.message);
       try {
-        const re = await axios.get(`${config.API_BASE_URL}/api/feedback/admin`, {
+        const re = await axios.get(`${config.API_BASE_URL}/api/feedback/admin/`, {
           headers: { Authorization: `Bearer ${parsedUser?.access_token}` },
         });
         const dataList = Array.isArray(re.data) ? re.data : re.data?.results ?? [];
