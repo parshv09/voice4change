@@ -1,1 +1,48 @@
 @import "tailwindcss";
+
+/* Nuke Google Translate Top Bar completely */
+html, body {
+  top: 0 !important;
+  position: static !important;
+  min-height: 100vh !important;
+}
+
+/* Hide the main Google Translate banner */
+.goog-te-banner-frame,
+iframe.goog-te-banner-frame {
+  display: none !important;
+}
+
+/* Hide the injected container directly under body */
+body > .skiptranslate {
+  display: none !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Hide modern obfuscated banner IDs/Classes */
+.VIpgJd-Zvi9od-aZ2wEe-wOHMyf,
+.VIpgJd-Zvi9od-aZ2wEe-wOHMyf-ti6hGc,
+iframe[id=":1.container"] {
+  display: none !important;
+}
+
+.goog-logo-link {
+  display: none !important;
+} 
+
+.goog-te-gadget {
+  height: 0px !important;
+  overflow: hidden !important;
+}
+
+.goog-tooltip {
+  display: none !important;
+}
+
+.goog-text-highlight {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}

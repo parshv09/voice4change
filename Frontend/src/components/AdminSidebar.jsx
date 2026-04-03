@@ -64,11 +64,11 @@ const AdminSidebar = ({ activeTab, setActivePage }) => {
       </motion.button>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex fixed top-0 left-0 bottom-0 w-64 bg-gradient-to-b from-gray-900 to-gray-800 text-white p-6 backdrop-blur-lg border-r border-gray-700 z-40 overflow-y-auto">
+      <aside className="hidden md:flex fixed top-16 left-0 h-[calc(100vh-64px)] w-64 bg-gray-900/80 text-white p-6 backdrop-blur-2xl border-r border-gray-700 z-40 overflow-y-auto">
         <div className="w-full">
           {/* Logo/Sidebar Header */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mt-16">
+            <h2 className="text-xl font-extrabold uppercase tracking-widest bg-gradient-to-r from-purple-400 to-blue-500 bg-clip-text text-transparent mt-2">
               Admin Panel
             </h2>
             <p className="text-xs text-gray-400 mt-1">
@@ -89,8 +89,8 @@ const AdminSidebar = ({ activeTab, setActivePage }) => {
                       className={`w-full flex items-center justify-between py-3 px-4 rounded-xl transition-all ${
                         activeTab === item.tab ||
                         item.subItems.some((sub) => activeTab === sub.tab)
-                          ? "bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg"
-                          : "hover:bg-gray-700/50"
+                          ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
+                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
                       }`}
                     >
                       <div className="flex items-center space-x-4">
@@ -164,18 +164,19 @@ const AdminSidebar = ({ activeTab, setActivePage }) => {
                 ) : (
                   <NavLink
                     to={item.path}
-                    onClick={() => setActivePage(item.tab)}
+                    end={item.path === "/admin"}
+                    onClick={() => setActivePage && setActivePage(item.tab)}
                     className={({ isActive }) =>
                       `flex items-center py-3 px-4 rounded-xl transition-all ${
-                        isActive
-                          ? "bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg"
-                          : "hover:bg-gray-700/50"
+                        isActive || activeTab === item.tab
+                          ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
+                          : "text-gray-300 hover:bg-gray-800 hover:text-white"
                       }`
                     }
                   >
                     <span
                       className={`mr-4 ${
-                        activeTab === item.tab ? "text-white" : "text-blue-400"
+                        activeTab === item.tab ? "text-white" : ""
                       }`}
                     >
                       {item.icon}
@@ -298,23 +299,24 @@ const AdminSidebar = ({ activeTab, setActivePage }) => {
                       ) : (
                         <NavLink
                           to={item.path}
+                          end={item.path === "/admin"}
                           onClick={() => {
-                            setActivePage(item.tab);
+                            if (setActivePage) setActivePage(item.tab);
                             setIsOpen(false);
                           }}
                           className={({ isActive }) =>
                             `flex items-center py-3 px-4 rounded-xl transition-all ${
-                              isActive
-                                ? "bg-gradient-to-r from-blue-600 to-blue-700 shadow-lg"
-                                : "hover:bg-gray-700/50"
+                              isActive || activeTab === item.tab
+                                ? "bg-blue-500 text-white shadow-lg shadow-blue-500/20"
+                                : "text-gray-300 hover:bg-gray-800 hover:text-white"
                             }`
                           }
                         >
                           <span
                             className={`mr-4 ${
-                              activeTab === item.tab
+                              activeTab === item.tab || location.pathname === item.path
                                 ? "text-white"
-                                : "text-blue-400"
+                                : ""
                             }`}
                           >
                             {item.icon}

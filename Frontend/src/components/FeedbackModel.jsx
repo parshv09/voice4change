@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import React from "react";
+import LoadingIndicator from "./LoadingIndicator";
 import "react-toastify/dist/ReactToastify.css";
 import { useForm } from "react-hook-form";
 
@@ -80,9 +81,9 @@ const FeedbackDetails = () => {
 
   if (!feedback)
     return (
-      <p className="text-center bg-slate-950 h-screen w-full text-xl p-10 text-gray-500">
-        Loading...
-      </p>
+      <div className="flex items-center justify-center bg-gray-950 h-screen w-full">
+        <LoadingIndicator variant="constellation" message="Loading feedback details..." />
+      </div>
     );
 
   return (
@@ -123,6 +124,21 @@ const FeedbackDetails = () => {
                 <span className="font-semibold text-white">Urgency:</span>{" "}
                 {feedback.urgency}
               </p>
+              
+              {feedback.photo && (
+                <div className="mt-6 border border-gray-700/50 rounded-xl overflow-hidden shadow-2xl">
+                  <div className="bg-gray-800/80 px-4 py-2 border-b border-gray-700/50">
+                    <span className="text-white text-sm font-semibold tracking-wide flex items-center gap-2">
+                       📷 Attached Evidence
+                    </span>
+                  </div>
+                  <img 
+                    src={feedback.photo.startsWith('http') ? feedback.photo : `${config.API_BASE_URL.replace(/\/$/, "")}/${feedback.photo.replace(/^\//, "")}`}
+                    alt="Feedback Evidence" 
+                    className="w-full max-h-96 object-contain bg-gray-900/60"
+                  />
+                </div>
+              )}
             </div>
 
             <button

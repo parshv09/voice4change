@@ -1,6 +1,7 @@
 import config from "../config";
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import ButtonSpinner from "./ButtonSpinner";
 import axios from "axios";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -91,7 +92,7 @@ const Login = () => {
             type="submit"
             disabled={loading}
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? <ButtonSpinner text="Authenticating..." /> : "Login"}
           </button>
 
           {error && <p className="text-red-500 text-center">{error}</p>}

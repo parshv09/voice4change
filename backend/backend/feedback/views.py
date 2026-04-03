@@ -122,24 +122,7 @@ class FeedbackListView(generics.ListAPIView):
     pagination_class = StandardResultsSetPagination
 
     def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-        language = request.GET.get("lang", "en")
-
-        if language != "en":  # Only translate if another language is requested
-            translator = GoogleTranslator(source='auto', target=language)
-            # Check if data is paginated (dict with "results")
-            feedback_list = response.data.get("results", response.data)
-
-            for feedback in feedback_list:
-                feedback["title"] = translator.translate(
-                    feedback["title"], dest=language
-                )
-                feedback["description"] = translator.translate(
-                    feedback["description"], dest=language
-                )
-        else:
-            return response
-        return response
+        return super().list(request, *args, **kwargs)
 
 
 
@@ -149,15 +132,7 @@ class FeedbackDetailView(generics.RetrieveAPIView):
     permission_classes = [permissions.AllowAny]
     
     def retrieve(self, request, *args, **kwargs):
-        response = super().retrieve(request, *args, **kwargs)
-        language = request.GET.get('lang', 'en')
-        translator = GoogleTranslator(source='auto', target=language)
-
-        response.data['title'] = translator.translate(response.data['title'], dest=language)
-        response.data['description'] = translator.translate(response.data['description'], dest=language)
-
-        return response
-    
+        return super().retrieve(request, *args, **kwargs)
 
 # views.py
 class FeedbackUpdateView(generics.UpdateAPIView):
@@ -194,14 +169,7 @@ class FeedbackDeleteView(generics.DestroyAPIView):
         return Feedback.objects.filter(user=self.request.user)
 
 
-class UserFeedbackView(generics.ListAPIView):
-    serializer_class = FeedbackSerializer
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        user = self.request.user  # Get logged-in user
-        return Feedback.objects.filter(user=user)  # Return only the logged-in user's feedback
 
 class AdminFeedbackView(generics.ListAPIView):
     serializer_class = FeedbackSerializer
@@ -228,10 +196,8 @@ class UserFeedbackView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user  # Get logged-in user
-
-        # if user.role == 'Authority':  # If the user is an admin
-        #     return Feedback.objects.filter(location=user.address)
-        
-        # If not admin, return only the feedback created by the logged-in user
+        # Return only the feedback created by the logged-in user
         return Feedback.objects.filter(user=user).select_related("user").order_by("-created_at") 
-    
+        
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
